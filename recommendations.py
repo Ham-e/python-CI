@@ -70,3 +70,33 @@ def topMatches(prefs, person, n = 5, similarity = sim_pearson):
     scores.sort()
     scores.reverse()
     return scores[0:n]
+
+# 다른 사람과의 순위의 가중평균값을 이용해서 특정 사람에 추천
+def getRecommendations(prefs, person, similarity = sim_pearson):
+    totals = {}
+    simSums = {}
+    for other in prefs:
+        # 나와 나를 비교하지 말 것
+        if other == person: continue
+        sim = similarity(prefs, person, other)
+
+        # 0 이하 점수는 무시함
+        if sim <= 0: continue
+        for item in prefs[other]:
+
+            # 내가 보지 못한 영화만 대상
+            if item not in prefs[person] or prefs[person][item] == 0:
+                # 유사도 * 점수
+                totals.setdefault(item, 0)
+                totals[item] += prefs[other][item] * sim
+                # 유사도 합계
+                simSums.setdefault(item, 0)
+                simSums[item] += sim
+
+    # 정규화된 목록 생성
+    rankings = [(total / simSums[item], item) for item, total in totals.items()]
+
+    # 정렬된 목록 리턴
+    rankings.sort()
+    rankings.reverse()
+    return rankings
